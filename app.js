@@ -1,5 +1,6 @@
 var MongoClient = require("mongodb").MongoClient
-  , ffmpeg = require('fluent-ffmpeg');
+  , fs = require("fs")
+  , spawn = require("child_process").spawn;
 
 // Connection URL
 var url = "mongodb://localhost:7441/av";
@@ -31,24 +32,37 @@ function hoursAgo(h) {
 function getRecordings(recArray) {
   recArray.forEach(function(obj) {
     var path = obj["path"]
-      , cmd = ffmpeg();
+      , argList = ["-f", "concat", "-i"]
+      , listname = obj["_id"].toString()
+      , ffmpeg;
+
+    var fd = fs.openSync(listname, "w");
+
     obj["playlist"].forEach(function(fileObj) {
       var fullpath = path;
       fullpath += "/" + fileObj["subPath"];
       fullpath += "/" + fileObj["fileName"];
-      console.log(fullpath);
-      cmd.input(fullpath);
+      fs.appendFile(listname, "file '" + fullpath + "'\n");
     });
-    cmd.on("error", function(err, stdout, stderr) {
-      console.log("An error occurred: " + err.message);
-      console.log("ffmpeg std out: " + stdout);
-      console.log("ffmpeg std err: " + stderr);
-    }).on("end", function() {
-      console.log("Merging finished!");
-    }).on("progress", function(progress) {
-      console.log("Processing: " + progress.percent);
-    }).on("start", function() {
-      console.log("Starting merge.");
-    }).mergeToFile("outfile.mkv");
+
+    fs.closeSync(fd);
+
+    argList.push(listname, "-c", "copy", "-bsf:a", "aac_adtstoasc");
+    argList.push(listname + ".mp4");
+
+    ffmpeg = spawn("ffmpeg", argList);
+
+    ffmpeg.stdout.on("data", function (data) {
+        console.log("stdout: " + data);
+    });
+
+    ffmpeg.stderr.on("data", function (data) {
+        console.log("stderr: " + data);
+    });
+
+    ffmpeg.on("close", function (code) {
+        fs.unlinkSync(listname);
+        console.log("child process exited with code " + code);
+    });
   });
 }
