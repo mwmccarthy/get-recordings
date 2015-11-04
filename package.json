@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mwmccarthy/get-recordings#readme",
   "dependencies": {
+    "fluent-ffmpeg": "^2.0.1",
     "mongodb": "^2.0.47"
   }
 }
