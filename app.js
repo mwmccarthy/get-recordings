@@ -1,5 +1,5 @@
 var MongoClient = require("mongodb").MongoClient
-  , FfmpegCommand = require('fluent-ffmpeg');
+  , ffmpeg = require('fluent-ffmpeg');
 
 // Connection URL
 var url = "mongodb://localhost:7441/av";
@@ -30,16 +30,14 @@ function hoursAgo(h) {
 
 function getRecordings(recArray) {
   recArray.forEach(function(obj) {
-    //console.log(obj);
     var path = obj["path"]
-      , cmd = new FfmpegCommand();
+      , cmd = ffmpeg();
     obj["playlist"].forEach(function(fileObj) {
       var fullpath = path;
       fullpath += "/" + fileObj["subPath"];
       fullpath += "/" + fileObj["fileName"];
       console.log(fullpath);
       cmd.input(fullpath);
-      //console.log(cmd);
     });
     cmd.on("error", function(err, stdout, stderr) {
       console.log("An error occurred: " + err.message);
@@ -48,16 +46,9 @@ function getRecordings(recArray) {
     }).on("end", function() {
       console.log("Merging finished!");
     }).on("progress", function(progress) {
-      console.log("Processing: " + progress.percent + "% done");
+      console.log("Processing: " + progress.percent);
     }).on("start", function() {
       console.log("Starting merge.");
-    });
-    //cmd.ffprobe(0, function(err, data) { console.log(data); });
-    cmd.output("outfile.mkv");
-    //cmd.run();
-    console.log("ran");
-    //console.log(cmd);
-    //console.log(obj["playlist"]);
-    // console.log(obj["cameraName"] + " " + new Date(obj["startTime"]));
+    }).mergeToFile("outfile.mkv");
   });
 }
