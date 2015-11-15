@@ -2,7 +2,6 @@ var MongoClient = require("mongodb").MongoClient
   , fs = require("fs")
   , spawn = require("child_process").spawn
   , moment = require("moment");
-
 // Connection URL
 var url = "mongodb://localhost:7441/av";
 
