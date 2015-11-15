@@ -1,6 +1,7 @@
 var MongoClient = require("mongodb").MongoClient
   , fs = require("fs")
-  , spawn = require("child_process").spawn;
+  , spawn = require("child_process").spawn
+  , moment = require("moment");
 
 // Connection URL
 var url = "mongodb://localhost:7441/av";
@@ -32,37 +33,38 @@ function hoursAgo(h) {
 function getRecordings(recArray) {
   recArray.forEach(function(obj) {
     var path = obj["path"]
-      , argList = ["-f", "concat", "-i"]
+      , argList = []
       , listname = obj["_id"].toString()
-      , ffmpeg;
-
-    var fd = fs.openSync(listname, "w");
+      , ffmpeg = null
+      , fd = fs.openSync(listname, "w")
+      , log = fs.closeSync(fs.openSync("ffmpeg.log", "w"))
+      , d = new Date(obj["startTime"])
+      , outf = '';
 
     obj["playlist"].forEach(function(fileObj) {
-      var fullpath = path;
-      fullpath += "/" + fileObj["subPath"];
-      fullpath += "/" + fileObj["fileName"];
-      fs.appendFile(listname, "file '" + fullpath + "'\n");
+      var fullpath = path + "/" + fileObj["subPath"] + "/" + fileObj["fileName"];
+      fs.appendFileSync(listname, "file '" + fullpath + "'\n");
     });
-
     fs.closeSync(fd);
 
-    argList.push(listname, "-c", "copy", "-bsf:a", "aac_adtstoasc");
-    argList.push(listname + ".mp4");
+    outf = moment(d).format("YYYY-MM-DD HH:mm") + " " + obj["cameraName"] + ".mp4";
+
+    argList.push("-f", "concat", "-i", listname, "-c",
+                 "copy", "-bsf:a", "aac_adtstoasc", outf);
 
     ffmpeg = spawn("ffmpeg", argList);
-
     ffmpeg.stdout.on("data", function (data) {
-        console.log("stdout: " + data);
+      console.log("stdout: " + data);
     });
-
     ffmpeg.stderr.on("data", function (data) {
-        console.log("stderr: " + data);
+      fs.appendFileSync("ffmpeg.log", data);
     });
-
+    ffmpeg.on("start", function () {
+      console.log("Retrieving files.");
+    });
     ffmpeg.on("close", function (code) {
-        fs.unlinkSync(listname);
-        console.log("child process exited with code " + code);
+      fs.unlinkSync(listname);
+      console.log("child process exited with code " + code);
     });
   });
 }

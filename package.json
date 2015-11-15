@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/mwmccarthy/get-recordings#readme",
   "dependencies": {
+    "moment": "^2.10.6",
     "mongodb": "^2.0.47"
   }
 }
