@@ -1,7 +1,9 @@
 var MongoClient = require("mongodb").MongoClient
   , fs = require("fs")
   , spawn = require("child_process").spawn
-  , moment = require("moment");
+  , moment = require("moment")
+  , config = require("./config");
+
 // Connection URL
 var url = "mongodb://localhost:7441/av";
 
@@ -12,7 +14,7 @@ function fulfill(db) {
   console.log("Opened connection to database.");
 
   db.collection("recording")
-    .find({ "startTime" : { $gt : hoursAgo(process.argv[2]) } })
+    .find({ "startTime" : { $gt : hoursAgo(config.hours) } })
     .toArray()
     .then(function(result) {
       db.close();
@@ -49,7 +51,8 @@ function getRecordings(recArray) {
     outf = moment(d).format("YYYY-MM-DD HH:mm") + " " + obj["cameraName"] + ".mp4";
 
     argList.push("-f", "concat", "-i", listname, "-c",
-                 "copy", "-bsf:a", "aac_adtstoasc", outf);
+                 "copy", "-bsf:a", "aac_adtstoasc",
+                 config.path + "/" + outf);
 
     ffmpeg = spawn("ffmpeg", argList);
     ffmpeg.stdout.on("data", function (data) {
