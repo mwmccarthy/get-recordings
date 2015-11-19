@@ -4,7 +4,7 @@
 
 * Install git with `apt-get install git`.
 
-* Install (nodejs)[https://github.com/nodejs/node-v0.x-archive/wiki/Installing-Node.js-via-package-manager#debian-and-ubuntu-based-linux-distributions]:
+* Install [nodejs](https://github.com/nodejs/node-v0.x-archive/wiki/Installing-Node.js-via-package-manager#debian-and-ubuntu-based-linux-distributions):
 ```
 apt-get install curl
 curl -sL https://deb.nodesource.com/setup_4.x | bash -
